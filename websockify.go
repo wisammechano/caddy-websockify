@@ -34,6 +34,7 @@ import (
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/gorilla/websocket"
 	N "github.com/hadi77ir/wsproxy/pkg/net"
@@ -42,6 +43,7 @@ import (
 
 func init() {
 	caddy.RegisterModule(new(ProxyHandler))
+	httpcaddyfile.RegisterHandlerDirective("websockify", parseCaddyfile)
 	caddycmd.RegisterCommand(caddycmd.Command{
 		Name:  "websockify",
 		Usage: `[--listen <addr>] [--access-log] [--debug] [--header "Field: value"] <upstream> [<upstream>]`,
@@ -159,12 +161,21 @@ func (s *ProxyHandler) nextDialer() N.PrimedDialerFunc {
 //
 //	websockify [<matcher>] <upstream> [<upstream>]
 func (s *ProxyHandler) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	d.Next() // consume directive name
+
 	s.Upstream = make([]string, 0)
 	for d.NextArg() {
 		arg := d.Val()
 		s.Upstream = append(s.Upstream, arg)
 	}
 	return nil
+}
+
+// parseCaddyfile unmarshals tokens from h into a new ProxyHandler.
+func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
+	var s ProxyHandler
+	err := s.UnmarshalCaddyfile(h.Dispenser)
+	return m, err
 }
 
 func (s *ProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
