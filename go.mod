@@ -1,4 +1,4 @@
-module github.com/hadi77ir/caddy-websockify
+module github.com/wisammechano/caddy-websockify
 
 go 1.19
 
